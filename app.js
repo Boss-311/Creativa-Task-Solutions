@@ -1,70 +1,27 @@
 const fs = require('fs');
 const path = require('path');
-const EventEmitter = require('events');
+const merger = require('./events'); // استيراد الـ EventEmitter
 
-// 1. إنشاء كلاس مشتق من EventEmitter لإدارة الأحداث
-class FileMerger extends EventEmitter {}
-const merger = new FileMerger();
+let file1Data = null;
+let file2Data = null;
 
-// تحديد مسارات الملفات بشكل أمن
-const file1Path = path.join(__dirname, 'file1.txt');
-const file2Path = path.join(__dirname, 'file2.txt');
-const outputPath = path.join(__dirname, 'output.txt');
-
-// كائن لتخزين محتوى الملفات عند قراءتها
-const filesData = {
-    file1: null,
-    file2: null
-};
-
-// 2. إعداد المستمعين للأحداث (Event Listeners)
-
-// حدث دمج الملفات عند جاهزيتها
-merger.on('mergeFiles', (content1, content2) => {
-    const combinedContent = `=== محتوى الملف الأول ===\n${content1}\n\n=== محتوى الملف الثاني ===\n${content2}`;
-
-    // كتابة الملف الناتج بشكل Non-Blocking Async
-    fs.writeFile(outputPath, combinedContent, 'utf8', (err) => {
-        if (err) {
-            merger.emit('error', `فشل أثناء كتابة الملف الناتج: ${err.message}`);
-            return;
-        }
-        console.log('✅ تم دمج المحتوى وكتابته في ملف "output.txt" بنجاح!');
-    });
-});
-
-// حدث إدارة الأخطاء (Error Handling)
-merger.on('error', (errorMessage) => {
-    console.error('❌ حدث خطأ:', errorMessage);
-});
-
-// دالة للتحقق من اكتمال قراءة الملفين
-function checkCompletion() {
-    if (filesData.file1 !== null && filesData.file2 !== null) {
-        merger.emit('mergeFiles', filesData.file1, filesData.file2);
+// دالة للتحقق من اكتمال قراءة الملفين بغض النظر عن الأسرع بينهما
+function checkAndEmit() {
+    if (file1Data !== null && file2Data !== null) {
+        merger.emit('mergeFiles', file1Data, file2Data);
     }
 }
 
-// 3. قراءة الملفات بشكل غير متزامن (Non-Blocking Async)
-
-// قراءة الملف الأول
-fs.readFile(file1Path, 'utf8', (err, data) => {
-    if (err) {
-        merger.emit('error', `فشل قراءة الملف الأول (${file1Path}): ${err.message}`);
-        return;
-    }
-    console.log('📖 تم قراءة الملف الأول بنجاح.');
-    filesData.file1 = data;
-    checkCompletion();
+// 1. قراءة الملف الأول (Non-Blocking)
+fs.readFile(path.join(__dirname, 'file1.txt'), 'utf8', (err, data) => {
+    if (err) return console.error('❌ Error reading file1.txt:', err);
+    file1Data = data;
+    checkAndEmit();
 });
 
-// قراءة الملف الثاني بالتوازي مع الملف الأول
-fs.readFile(file2Path, 'utf8', (err, data) => {
-    if (err) {
-        merger.emit('error', `فشل قراءة الملف الثاني (${file2Path}): ${err.message}`);
-        return;
-    }
-    console.log('📖 تم قراءة الملف الثاني بنجاح.');
-    filesData.file2 = data;
-    checkCompletion();
+// 2. قراءة الملف الثاني (Non-Blocking)
+fs.readFile(path.join(__dirname, 'file2.txt'), 'utf8', (err, data) => {
+    if (err) return console.error('❌ Error reading file2.txt:', err);
+    file2Data = data;
+    checkAndEmit();
 });

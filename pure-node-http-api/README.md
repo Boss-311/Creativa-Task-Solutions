@@ -8,7 +8,7 @@ A lightweight, zero-dependency RESTful Backend API built purely using Node.js's 
 
 - **Zero External Dependencies:** Built entirely using Node.js built-in modules.
 - **Stream Processing:** Handles incoming request body chunks manually via `req.on('data')` and `req.on('end')`.
-- **RESTful Architecture:** Supports `GET`, `POST`, and `DELETE` HTTP methods.
+- **RESTful Architecture:** Supports `GET`, `POST` and  HTTP methods.
 - **In-Memory Data Store:** Performs CRUD operations on Javascript arrays.
 - **Error Handling:** Manages `404 Not Found` routes and handles `400 Bad Request` for invalid JSON payloads.
 
@@ -65,8 +65,8 @@ Make sure you have Node.js installed on your system. Run `node -v` to verify.
     {
       "message": "(User Route)",
       "users": [
-        { "id": 1, "name": "Ahmed" },
-        { "id": 2, "name": "Sarah" }
+        { "id": 1, "name": "Boss" },
+        { "id": 2, "name": "Moamen" }
       ]
     }
 
@@ -93,24 +93,11 @@ Make sure you have Node.js installed on your system. Run `node -v` to verify.
     }
 - **Response Example (`201 Created`):**
     {
-      "message": "تم استلام البيانات وتخزينها بنجاح!",
+      "message": "The data has been successfully received and stored.!",
       "storedProduct": { "id": 104, "name": "headphone", "price": 1200 },
       "allProducts": [...]
     }
 
-### 5. Delete Product
-- **URL:** `DELETE /product`
-- **Headers:** `Content-Type: application/json`
-- **Body:**
-    {
-      "id": 101
-    }
-- **Response Example (`200 OK`):**
-    {
-      "message": "تم حذف المنتج بنجاح!",
-      "deletedProduct": { "id": 101, "name": "labtop", "price": 15000 },
-      "allProducts": [...]
-    }
 
 ---
 

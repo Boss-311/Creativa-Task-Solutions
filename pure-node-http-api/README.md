@@ -49,7 +49,6 @@ Make sure you have Node.js installed on your system. Run `node -v` to verify.
 | **GET** | `/user` | Fetch list of users | None | `200 OK` |
 | **GET** | `/product` | Fetch list of products | None | `200 OK` |
 | **POST** | `/product` | Add a new product | JSON Object | `201 Created` |
-| **DELETE** | `/product` | Delete a product by ID | JSON Object | `200 OK` |
 
 ---
 

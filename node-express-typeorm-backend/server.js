@@ -98,12 +98,10 @@ app.post("/notes", authMiddleware, async (req, res) => {
     }
 });
 
-// 1️⃣ أند بوينت GET لجلب كل النوتس الخاصة باليوزر المسجل بالتوكن
 app.get("/notes", authMiddleware, async (req, res) => {
     try {
         const noteRepository = AppDataSource.getRepository(NoteSchema);
         
-        // جلب النوتس اللي تخص اليوزر ده بس عن طريق الـ ID بتاعه في التوكن
         const notes = await noteRepository.find({
             where: { user: { id: req.user.userId } }
         });
@@ -114,17 +112,15 @@ app.get("/notes", authMiddleware, async (req, res) => {
     }
 });
 
-// 2️⃣ أند بوينت GET للبحث في النوتس (Search by title or content)
 app.get("/notes/search", authMiddleware, async (req, res) => {
     try {
-        const { keyword } = req.query; // الكلمة اللي اليوزر بيبحث عنها في الـ URL
+        const { keyword } = req.query; 
         const noteRepository = AppDataSource.getRepository(NoteSchema);
 
         if (!keyword) {
             return res.status(400).json({ message: "Please provide a search keyword" });
         }
 
-        // استخدام TypeORM لعمل بحث بالـ Like في العنوان أو المحتوى مع التأكد إنها تخص اليوزر نفسه
         const notes = await noteRepository.createQueryBuilder("note")
             .where("note.userId = :userId", { userId: req.user.userId })
             .andWhere("(note.title LIKE :keyword OR note.content LIKE :keyword)", { keyword: `%${keyword}%` })

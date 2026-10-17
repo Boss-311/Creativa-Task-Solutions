@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Layered Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen p-6">
+    <div class="max-w-3xl mx-auto space-y-6">
+        
+        <!-- عنوان الصفحة -->
+        <header class="bg-white shadow p-6 rounded-xl text-center">
+            <h1 class="text-2xl font-bold text-gray-800">لوحة تحكم البوستات 🚀</h1>
+            <p class="text-gray-500 text-sm mt-1">سجل حسابك أو ادخل عشان تقدر تنشر وتحذف البوستات</p>
+        </header>
+
+        <!-- قسم التسجيل وتسجيل الدخول -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- تسجيل حساب جديد -->
+            <div class="bg-white shadow p-6 rounded-xl">
+                <h2 class="text-md font-semibold text-gray-700 mb-3">حساب جديد (Register)</h2>
+                <form id="registerForm" class="space-y-3">
+                    <input type="text" id="regUsername" placeholder="اسم المستخدم" required class="w-full border rounded-lg p-2 text-sm">
+                    <input type="email" id="regEmail" placeholder="البريد الإلكتروني" required class="w-full border rounded-lg p-2 text-sm">
+                    <input type="password" id="regPassword" placeholder="كلمة المرور" required class="w-full border rounded-lg p-2 text-sm">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm font-medium">تسجيل</button>
+                </form>
+            </div>
+
+            <!-- تسجيل الدخول -->
+            <div class="bg-white shadow p-6 rounded-xl">
+                <h2 class="text-md font-semibold text-gray-700 mb-3">تسجيل الدخول (Login)</h2>
+                <form id="loginForm" class="space-y-3">
+                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required class="w-full border rounded-lg p-2 text-sm">
+                    <input type="password" id="loginPassword" placeholder="كلمة المرور" required class="w-full border rounded-lg p-2 text-sm">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">دخول واستخراج الـ Token</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- خانة التوكن (JWT Token) -->
+        <div class="bg-white shadow p-4 rounded-xl border-2 border-blue-100">
+            <label class="block text-sm font-medium text-gray-700 mb-1">JWT Bearer Token (بيتلصق أوتوماتيك لما تسجل دخول):</label>
+            <input type="text" id="tokenInput" placeholder="سجل دخول عشان الـ Token يظهر هنا..." class="w-full border border-gray-300 rounded-lg p-2 text-sm bg-gray-50 focus:outline-none">
+        </div>
+
+        <!-- فورم إضافة بوست جديد -->
+        <div class="bg-white shadow p-6 rounded-xl">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">إضافة بوست جديد</h2>
+            <form id="postForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">عنوان البوست</label>
+                    <input type="text" id="title" required class="w-full border border-gray-300 rounded-lg p-2 mt-1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">محتوى البوست</label>
+                    <textarea id="content" rows="3" required class="w-full border border-gray-300 rounded-lg p-2 mt-1"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 font-medium">نشر البوست</button>
+            </form>
+        </div>
+
+        <!-- قائمة البوستات -->
+        <div class="bg-white shadow p-6 rounded-xl">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">الـ Posts المتاحة</h2>
+            <div id="postsContainer" class="space-y-4">
+                <p class="text-gray-400 text-center">جاري تحميل البوستات...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5000";
+
+        // تسجيل حساب جديد
+        document.getElementById("registerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("regUsername").value;
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPassword").value;
+
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password })
+            });
+            const data = await res.json();
+            alert(data.message);
+        });
+
+        // تسجيل الدخول ووضع الـ Token أوتوماتيك في الخانة
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("أهلاً بك! تم تسجيل الدخول بنجاح 🎉");
+                document.getElementById("tokenInput").value = data.token;
+            } else {
+                alert("خطأ: " + data.message);
+            }
+        });
+
+        // جلب البوستات
+        async function fetchPosts() {
+            try {
+                const res = await fetch(`${API_URL}/posts`);
+                const posts = await res.json();
+                const container = document.getElementById("postsContainer");
+                
+                if (posts.length === 0) {
+                    container.innerHTML = `<p class="text-gray-400 text-center">مفيش بوستات حالياً!</p>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+                posts.forEach(post => {
+                    container.innerHTML += `
+                        <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-start bg-gray-50">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">${post.title}</h3>
+                                <p class="text-gray-600 mt-1">${post.content}</p>
+                                <span class="text-xs text-blue-600 mt-2 block">بواسطة: ${post.user ? post.user.username : 'مجهول'}</span>
+                            </div>
+                            <button onclick="deletePost(${post.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition">حذف</button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error fetching posts:", err);
+            }
+        }
+
+        // إضافة بوست
+        document.getElementById("postForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const title = document.getElementById("title").value;
+            const content = document.getElementById("content").value;
+            const token = document.getElementById("tokenInput").value;
+
+            if (!token) {
+                alert("يجب تسجيل الدخول أولاً ليظهر الـ Token!");
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/posts`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ title, content })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("تم نشر البوست بنجاح! 🚀");
+                document.getElementById("title").value = "";
+                document.getElementById("content").value = "";
+                fetchPosts();
+            } else {
+                alert("خطأ: " + (data.message || JSON.stringify(data.errors)));
+            }
+        });
+
+        // حذف بوست
+        async function deletePost(id) {
+            const token = document.getElementById("tokenInput").value;
+            if (!token) {
+                alert("لا يمكنك الحذف بدون تسجيل الدخول!");
+                return;
+            }
+
+            if (!confirm("متأكد انك عايز تمسح البوست؟")) return;
+
+            const res = await fetch(`${API_URL}/posts/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                alert("تم الحذف بنجاح 🗑️");
+                fetchPosts();
+            } else {
+                const data = await res.json();
+                alert("خطأ: " + data.message);
+            }
+        }
+
+        fetchPosts();
+    </script>
+</body>
+</html>
